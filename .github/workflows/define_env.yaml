@@ -1,0 +1,28 @@
+name: define_env
+on:
+    workflow_call:
+        outputs: 
+            ENV:
+                description: 'environnement'
+                value: ${{jobs.define_env_variable.outputs.ENV}}
+
+jobs:
+    define_env_variable:
+      runs-on: "ubuntu-latest"
+      name: environment
+      outputs:
+        ENV: ${{ steps.ENV.outputs.ENV }}
+      steps:
+        - name: Sets workflow environment for production
+          run: |
+            echo "ENV=prod" >> $GITHUB_ENV
+          if: github.ref_name == 'production'
+  
+        - name: Sets workflow environment for QUALIF
+          run: |
+            echo "ENV=QUALIF" >> $GITHUB_ENV
+          if: github.ref_name == 'main'
+  
+        - id: Env
+          run: |
+            echo "ENV=$ENV" >> $GITHUB_OUTPUT
