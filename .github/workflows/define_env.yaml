@@ -26,7 +26,7 @@ jobs:
         - name: Sets workflow environment for feature branche
           run: |
             echo "ENV=QUALIF" >> $GITHUB_ENV
-          if: startsWith(github.ref_name, 'feature/')
+          if: startsWith(github.event.pull_request.head.ref, 'feature/')
   
         - id: Env
           run: |
