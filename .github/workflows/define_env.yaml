@@ -4,30 +4,36 @@ on:
         outputs: 
             ENV:
                 description: 'environnement'
-                value: ${{jobs.define_env_variable.outputs.ENV}}
+                value: ${{ jobs.define_env_variable.outputs.ENV }}
 
 jobs:
     define_env_variable:
-      runs-on: "ubuntu-latest"
+      runs-on: ubuntu-latest
       name: environment
       outputs:
-        ENV: ${{ steps.ENV.outputs.ENV }}
-      steps:
-        - name: Sets workflow environment for production
-          run: |
-            echo "ENV=prod" >> $GITHUB_ENV
-          if: github.ref_name == 'production'
-  
-        - name: Sets workflow environment for QUALIF
-          run: |
-            echo "ENV=QUALIF" >> $GITHUB_ENV
-          if: github.ref_name == 'main'
+        ENV: ${{ steps.env_step.outputs.ENV }}
 
-        - name: Sets workflow environment for feature branche
+      steps:
+        - name: Déterminer environnement
+          id: env_step
           run: |
-            echo "ENV=QUALIF" >> $GITHUB_ENV
-          if: startsWith(github.event.pull_request.head.ref, 'feature/')
-  
-        - id: Env
-          run: |
-            echo "ENV=$ENV" >> $GITHUB_OUTPUT
+            BRANCH_NAME=""
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+            else
+              BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+            fi
+            
+            if [[ "$BRANCH_NAME" == "production" ]]; then
+              echo "ENV=prod" >> $GITHUB_ENV
+              echo "ENV=prod" >> $GITHUB_OUTPUT
+            elif [[ "$BRANCH_NAME" == "main" ]]; then
+              echo "ENV=QUALIF" >> $GITHUB_ENV
+              echo "ENV=QUALIF" >> $GITHUB_OUTPUT
+            elif [[ "$BRANCH_NAME" == feature/* ]]; then
+              echo "ENV=QUALIF" >> $GITHUB_ENV
+              echo "ENV=QUALIF" >> $GITHUB_OUTPUT
+            else
+              echo "ENV=UNKNOWN" >> $GITHUB_ENV
+              echo "ENV=UNKNOWN" >> $GITHUB_OUTPUT
+            fi
